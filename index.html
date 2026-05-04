@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>შენი წილი — კალკულატორი</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366f1'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3E%24%3C/text%3E%3C/svg%3E" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg-1: #0b1020;
+      --bg-2: #131a36;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-border: rgba(255, 255, 255, 0.10);
+      --text: #e6e9f5;
+      --muted: #9aa3c7;
+      --accent: #818cf8;
+      --accent-2: #22d3ee;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100dvh;
+      font-family: 'Noto Sans Georgian', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(99,102,241,.25), transparent 60%),
+        radial-gradient(900px 600px at 110% 10%, rgba(34,211,238,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    header.hero {
+      text-align: center;
+      padding: 24px 8px 16px;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(129,140,248,.12);
+      border: 1px solid rgba(129,140,248,.35);
+      color: #c7d2fe; font-size: 12px; font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .badge .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 999px; box-shadow: 0 0 10px var(--accent); }
+    h1 {
+      font-size: clamp(22px, 5.6vw, 32px);
+      margin: 14px 0 6px;
+      font-weight: 800; letter-spacing: -0.01em;
+      background: linear-gradient(90deg, #fff, #c7d2fe 60%, #67e8f9);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    p.lead { color: var(--muted); margin: 0 0 4px; font-size: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .field {
+      display: flex; flex-direction: column; gap: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      transition: border-color .2s ease, transform .15s ease, background .2s ease;
+    }
+    .field:focus-within {
+      border-color: rgba(129,140,248,.65);
+      background: rgba(129,140,248,.07);
+    }
+    .field .label-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .field label {
+      font-size: 13px; font-weight: 600; color: #c7d2fe;
+    }
+    .field .unit { font-size: 11px; color: var(--muted); font-weight: 500; }
+    .field .hint { font-size: 11px; color: var(--muted); }
+    .field input {
+      appearance: none; -webkit-appearance: none;
+      background: transparent; border: 0; outline: none;
+      color: var(--text);
+      font: 600 18px/1.2 'Inter', system-ui, sans-serif;
+      padding: 4px 0 2px;
+      width: 100%;
+      letter-spacing: -.01em;
+    }
+    .field input::placeholder { color: rgba(255,255,255,0.25); font-weight: 500; }
+    /* Hide spinners */
+    .field input[type=number]::-webkit-outer-spin-button,
+    .field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .field input[type=number] { -moz-appearance: textfield; }
+
+    .actions {
+      display: flex; gap: 10px; margin-top: 14px;
+    }
+    .btn {
+      flex: 1;
+      appearance: none; border: 0; cursor: pointer;
+      padding: 12px 14px; border-radius: 14px;
+      font: 700 15px/1 'Noto Sans Georgian', 'Inter', sans-serif;
+      transition: transform .1s ease, filter .15s ease, background .15s ease;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #22d3ee); color: white; box-shadow: 0 10px 30px rgba(99,102,241,.35); }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.10); }
+
+    .results {
+      margin-top: 18px;
+      display: grid; gap: 12px;
+    }
+    .result {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      padding: 18px 18px;
+      background:
+        radial-gradient(600px 200px at -10% -50%, rgba(99,102,241,.30), transparent 60%),
+        rgba(255,255,255,0.04);
+      border: 1px solid rgba(129,140,248,.25);
+    }
+    .result.alt {
+      background:
+        radial-gradient(600px 200px at 110% -50%, rgba(34,211,238,.28), transparent 60%),
+        rgba(255,255,255,0.04);
+      border-color: rgba(34,211,238,.25);
+    }
+    .result .name { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .result .value {
+      margin-top: 4px;
+      font: 800 clamp(24px, 6vw, 32px)/1.1 'Inter', system-ui, sans-serif;
+      letter-spacing: -.02em;
+      color: white;
+    }
+    .result .formula {
+      margin-top: 6px;
+      font-size: 12px; color: var(--muted);
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .result .pill {
+      position: absolute; top: 14px; right: 14px;
+      font-size: 11px; padding: 4px 8px; border-radius: 999px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+      color: var(--muted); font-weight: 600;
+    }
+
+    .examples {
+      margin-top: 18px;
+    }
+    .examples h3 {
+      margin: 0 0 10px;
+      font-size: 14px; color: #c7d2fe; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chips {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .chip {
+      font: 600 12px/1 'Inter', sans-serif;
+      padding: 8px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: var(--text);
+      cursor: pointer; transition: background .15s ease, transform .1s ease;
+    }
+    .chip:hover { background: rgba(129,140,248,.15); }
+    .chip:active { transform: scale(.97); }
+
+    footer {
+      text-align: center; color: var(--muted);
+      font-size: 12px; padding: 20px 8px 4px;
+    }
+    .err {
+      margin-top: 10px; font-size: 12px; color: var(--danger);
+      min-height: 16px;
+    }
+    .section-title {
+      font-size: 13px; color: var(--muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: .12em;
+      margin: 0 4px 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <span class="badge"><span class="dot"></span>კალკულატორი</span>
+      <h1>შენი წილი ჯიქიაზე</h1>
+      <p class="lead">შეიყვანეთ მონაცემები — შედეგი დაითვლება ავტომატურად</p>
+    </header>
+
+    <section class="card" aria-label="შეყვანის ფორმა">
+      <p class="section-title">შეყვანა</p>
+      <div class="grid">
+        <div class="field">
+          <div class="label-row">
+            <label for="A">A — სრული მიწა</label>
+            <span class="unit">მ²</span>
+          </div>
+          <input id="A" type="number" inputmode="decimal" step="any" min="0" placeholder="მაგ: 1000" autocomplete="off" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="B">B — სრული ნაგებობა</label>
+            <span class="unit">მ²</span>
+          </div>
+          <input id="B" type="number" inputmode="decimal" step="any" min="0" placeholder="მაგ: 2000" autocomplete="off" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="C">C — პირის ფართი</label>
+            <span class="unit">მ²</span>
+          </div>
+          <input id="C" type="number" inputmode="decimal" step="any" min="0" placeholder="მაგ: 500" autocomplete="off" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="D">D — ფასი / მ²</label>
+            <span class="unit">$</span>
+          </div>
+          <input id="D" type="number" inputmode="decimal" step="any" min="0" placeholder="მაგ: 1000" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="err" id="err" role="alert"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="calc" type="button">გამოთვლა</button>
+        <button class="btn btn-ghost" id="reset" type="button">გასუფთავება</button>
+      </div>
+    </section>
+
+    <section class="results" aria-live="polite">
+      <div class="result">
+        <span class="pill">V</span>
+        <div class="name">შენი წილი</div>
+        <div class="value" id="V">— $</div>
+        <div class="formula">V = (C ÷ B) × A × D</div>
+      </div>
+      <div class="result alt">
+        <span class="pill">X</span>
+        <div class="name">მიწის სრული ფასი</div>
+        <div class="value" id="X">— $</div>
+        <div class="formula">X = D × A</div>
+      </div>
+    </section>
+
+    <section class="examples card" aria-label="მაგალითები">
+      <h3>მაგალითები (პრაქტიკული მოდელი)</h3>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <footer>
+      © <span id="yr"></span> · შექმნილია Excel-შაბლონის მიხედვით
+    </footer>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const inputs = ['A', 'B', 'C', 'D'].map($);
+    const errEl = $('err');
+    const Vel = $('V');
+    const Xel = $('X');
+
+    const fmt = (n) => {
+      if (!isFinite(n)) return '— $';
+      const abs = Math.abs(n);
+      const opts = abs >= 100 ? { maximumFractionDigits: 2 } : { maximumFractionDigits: 4 };
+      return new Intl.NumberFormat('en-US', opts).format(n) + ' $';
+    };
+
+    const parse = (el) => {
+      const v = el.value.trim().replace(',', '.');
+      if (v === '') return NaN;
+      const n = Number(v);
+      return isFinite(n) ? n : NaN;
+    };
+
+    function compute() {
+      const [A, B, C, D] = inputs.map(parse);
+      errEl.textContent = '';
+
+      const allEmpty = inputs.every((el) => el.value.trim() === '');
+      if (allEmpty) {
+        Vel.textContent = '— $';
+        Xel.textContent = '— $';
+        return;
+      }
+
+      if ([A, B, C, D].some((n) => isNaN(n))) {
+        Vel.textContent = '— $';
+        Xel.textContent = '— $';
+        return;
+      }
+      if (B === 0) {
+        errEl.textContent = 'B (სრული ნაგებობა) არ შეიძლება იყოს 0';
+        Vel.textContent = '— $';
+        Xel.textContent = fmt(D * A);
+        return;
+      }
+      if ([A, B, C, D].some((n) => n < 0)) {
+        errEl.textContent = 'მნიშვნელობები არ უნდა იყოს უარყოფითი';
+        return;
+      }
+
+      const V = (C / B) * A * D;
+      const X = D * A;
+      Vel.textContent = fmt(V);
+      Xel.textContent = fmt(X);
+    }
+
+    inputs.forEach((el) => el.addEventListener('input', compute));
+    $('calc').addEventListener('click', () => { compute(); inputs[0].focus({ preventScroll: true }); });
+    $('reset').addEventListener('click', () => {
+      inputs.forEach((el) => (el.value = ''));
+      errEl.textContent = '';
+      Vel.textContent = '— $';
+      Xel.textContent = '— $';
+      inputs[0].focus();
+    });
+
+    const examples = [
+      { A: 1000, B: 2000, C: 500, D: 1000 },
+      { A: 300,  B: 2000, C: 150, D: 1000 },
+      { A: 1500, B: 2000, C: 750, D: 1000 },
+      { A: 700,  B: 2000, C: 350, D: 1000 },
+      { A: 1800, B: 4000, C: 260, D: 1000 },
+    ];
+    const chipsEl = $('chips');
+    examples.forEach((ex, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = `მაგ. ${i + 1}: A=${ex.A}, B=${ex.B}, C=${ex.C}, D=${ex.D}`;
+      b.addEventListener('click', () => {
+        $('A').value = ex.A; $('B').value = ex.B; $('C').value = ex.C; $('D').value = ex.D;
+        compute();
+      });
+      chipsEl.appendChild(b);
+    });
+
+    $('yr').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
