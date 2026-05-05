@@ -109,7 +109,6 @@
       width: 28px;
       min-width: 28px;
       max-width: 100%;
-      field-sizing: content;
       letter-spacing: -.01em;
     }
     .field input::placeholder { color: rgba(255,255,255,0.25); font-weight: 500; }
@@ -304,9 +303,7 @@
     const Vel = $('V');
     const Xel = $('X');
 
-    const supportsFieldSizing = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
     function autosize(el) {
-      if (supportsFieldSizing) return;
       const mirror = document.createElement('span');
       const cs = getComputedStyle(el);
       mirror.style.cssText =
@@ -314,10 +311,16 @@
         'font:' + cs.font + ';letter-spacing:' + cs.letterSpacing + ';';
       mirror.textContent = el.value || el.placeholder || '';
       document.body.appendChild(mirror);
-      el.style.width = Math.max(mirror.offsetWidth + 2, 28) + 'px';
+      el.style.width = Math.max(Math.ceil(mirror.getBoundingClientRect().width) + 2, 28) + 'px';
       mirror.remove();
     }
-    inputs.forEach((el) => { autosize(el); el.addEventListener('input', () => autosize(el)); });
+    function autosizeAll() { inputs.forEach(autosize); }
+    inputs.forEach((el) => el.addEventListener('input', () => autosize(el)));
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(autosizeAll);
+    }
+    window.addEventListener('load', autosizeAll);
+    autosizeAll();
 
     const fmt = (n) => {
       if (!isFinite(n)) return '— $';
