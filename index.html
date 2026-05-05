@@ -97,8 +97,8 @@
     }
     .field .hint { font-size: 11px; color: var(--muted); }
     .input-row {
-      display: flex; align-items: baseline; gap: 6px;
-      width: 100%;
+      display: flex; align-items: baseline; gap: 1px;
+      width: 100%; flex-wrap: nowrap;
     }
     .field input {
       appearance: none; -webkit-appearance: none;
@@ -106,20 +106,22 @@
       color: var(--text);
       font: 600 18px/1.2 'Inter', system-ui, sans-serif;
       padding: 4px 0 2px;
-      flex: 1;
-      min-width: 0;
+      width: 28px;
+      min-width: 28px;
+      max-width: 100%;
+      field-sizing: content;
       letter-spacing: -.01em;
     }
     .field input::placeholder { color: rgba(255,255,255,0.25); font-weight: 500; }
     .field .unit-suffix {
       flex-shrink: 0;
-      font: 600 15px/1.2 'Noto Sans Georgian', 'Inter', system-ui, sans-serif;
+      font: 600 18px/1.2 'Noto Sans Georgian', 'Inter', system-ui, sans-serif;
       color: var(--muted);
       letter-spacing: -.01em;
       transition: color .2s ease;
     }
     .field:focus-within .unit-suffix { color: #c7d2fe; }
-    .field input:placeholder-shown + .unit-suffix { opacity: .45; }
+    .field input:placeholder-shown ~ .unit-suffix { opacity: .45; }
     /* Hide spinners */
     .field input[type=number]::-webkit-outer-spin-button,
     .field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -302,6 +304,21 @@
     const Vel = $('V');
     const Xel = $('X');
 
+    const supportsFieldSizing = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('field-sizing', 'content');
+    function autosize(el) {
+      if (supportsFieldSizing) return;
+      const mirror = document.createElement('span');
+      const cs = getComputedStyle(el);
+      mirror.style.cssText =
+        'position:absolute;left:-9999px;top:-9999px;visibility:hidden;white-space:pre;' +
+        'font:' + cs.font + ';letter-spacing:' + cs.letterSpacing + ';';
+      mirror.textContent = el.value || el.placeholder || '';
+      document.body.appendChild(mirror);
+      el.style.width = Math.max(mirror.offsetWidth + 2, 28) + 'px';
+      mirror.remove();
+    }
+    inputs.forEach((el) => { autosize(el); el.addEventListener('input', () => autosize(el)); });
+
     const fmt = (n) => {
       if (!isFinite(n)) return '— $';
       const abs = Math.abs(n);
@@ -352,7 +369,7 @@
     inputs.forEach((el) => el.addEventListener('input', compute));
     $('calc').addEventListener('click', () => { compute(); inputs[0].focus({ preventScroll: true }); });
     $('reset').addEventListener('click', () => {
-      inputs.forEach((el) => (el.value = ''));
+      inputs.forEach((el) => { el.value = ''; autosize(el); });
       errEl.textContent = '';
       Vel.textContent = '— $';
       Xel.textContent = '— $';
@@ -374,6 +391,7 @@
       b.textContent = `მაგ. ${i + 1}: A=${ex.A}, B=${ex.B}, C=${ex.C}, D=${ex.D}`;
       b.addEventListener('click', () => {
         $('A').value = ex.A; $('B').value = ex.B; $('C').value = ex.C; $('D').value = ex.D;
+        inputs.forEach(autosize);
         compute();
       });
       chipsEl.appendChild(b);
